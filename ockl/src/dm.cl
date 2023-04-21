@@ -201,6 +201,13 @@ get_heap_ptr(void) {
     }
 }
 
+// realtime
+__attribute__((target("s-memrealtime"))) static ulong
+realtime(void)
+{
+    return __builtin_amdgcn_s_memrealtime();
+}
+
 // The actual number of blocks in a slab with blocks of kind k
 static uint
 num_blocks(kind_t k)
@@ -468,7 +475,7 @@ new_slab_wait(__global heap_t *hp, kind_t k)
     uint aid = __ockl_activelane_u32();
     if (aid == 0) {
         ulong expected = AL(&hp->salloc_time[k].value, memory_order_relaxed);
-        ulong now = __ockl_steadyctr_u64();
+        ulong now = realtime();
         ulong dt = now - expected;
         if  (dt < SLAB_TICKS)
             __ockl_rtcwait_u32(SLAB_TICKS - (uint)dt);
@@ -482,7 +489,7 @@ grow_recordable_wait(__global heap_t *hp, kind_t k)
     uint aid = __ockl_activelane_u32();
     if (aid == 0) {
         ulong expected = AL(&hp->grow_time[k].value, memory_order_relaxed);
-        ulong now = __ockl_steadyctr_u64();
+        ulong now = realtime();
         ulong dt = now - expected;
         if  (dt < GROW_TICKS)
             __ockl_rtcwait_u32(GROW_TICKS - (uint)dt);
@@ -542,7 +549,7 @@ try_grow_num_recordable_slabs(__global heap_t *hp, kind_t k)
     uint ret = GROW_BUSY;
     if (aid == 0) {
         ulong expected = AL(&hp->grow_time[k].value, memory_order_relaxed);
-        ulong now = __ockl_steadyctr_u64();
+        ulong now = realtime();
         if (now - expected >= GROW_TICKS &&
             ACE(&hp->grow_time[k].value, &expected, now, memory_order_relaxed))
                 ret = GROW_FAILURE;
@@ -689,7 +696,7 @@ try_allocate_new_slab(__global heap_t *hp, kind_t k)
 
         if (aid == 0) {
             ulong expected = AL(&hp->salloc_time[k].value, memory_order_relaxed);
-            ulong now = __ockl_steadyctr_u64();
+            ulong now = realtime();
             if (now - expected >= SLAB_TICKS &&
                 ACE(&hp->salloc_time[k].value, &expected, now, memory_order_relaxed))
                 ret = (__global sdata_t *)0;
