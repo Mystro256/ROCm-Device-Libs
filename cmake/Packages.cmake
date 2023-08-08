@@ -30,7 +30,7 @@ set(install_path_suffix "amdgcn/bitcode")
 
 # Generate the install-tree package.
 set(AMD_DEVICE_LIBS_PREFIX_CODE "
-set(AMD_DEVICE_LIBS_PREFIX \"\${CMAKE_CURRENT_LIST_FILE}\")")
+set(AMD_DEVICE_LIBS_PREFIX \"${CLANG_RESOURCE_DIR}\")")
 set(AMD_DEVICE_LIBS_TARGET_CODE)
 foreach(target ${AMDGCN_LIB_LIST})
   get_target_property(target_name ${target} ARCHIVE_OUTPUT_NAME)
